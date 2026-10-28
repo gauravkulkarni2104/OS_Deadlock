@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deadlock Analysis & Resource Allocation Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header class="hero">
+        <div class="hero-inner">
+            <p class="eyebrow">OPERATING SYSTEMS · ACTIVITY 2</p>
+            <h1>Deadlock Analysis &amp; Resource Allocation Dashboard</h1>
+            <p class="hero-description">Explore safe states, resource requests, deadlock detection, recovery, and prevention in one interactive dashboard.</p>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <section class="overview-grid" aria-label="Dashboard overview">
+            <article class="stat-card">
+                <span class="stat-label">Processes</span>
+                <strong id="processCount">5</strong>
+                <span class="stat-note">Banker's Algorithm model</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Resource types</span>
+                <strong id="resourceCount">3</strong>
+                <span class="stat-note">A, B and C</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Current state</span>
+                <strong id="status" class="status-neutral">Not Checked</strong>
+                <span class="stat-note" id="statusDescription">Run a safety check</span>
+            </article>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">MODULE 01</p>
+                    <h2>Banker's Algorithm</h2>
+                </div>
+                <button id="checkButton" class="button button-primary" type="button">Run Safety Check</button>
+            </div>
+            <p class="muted">The safety algorithm checks whether all processes can finish in some order using the available resources and the resources released by completed processes.</p>
+
+            <div class="matrix-grid">
+                <div class="matrix-panel">
+                    <h3>Allocation Matrix</h3>
+                    <div id="allocationTable" class="table-wrap"></div>
+                </div>
+                <div class="matrix-panel">
+                    <h3>Maximum Matrix</h3>
+                    <div id="maximumTable" class="table-wrap"></div>
+                </div>
+                <div class="matrix-panel">
+                    <h3>Need Matrix</h3>
+                    <p class="formula">Need = Maximum − Allocation</p>
+                    <div id="needTable" class="table-wrap"></div>
+                </div>
+            </div>
+
+            <div class="available-panel">
+                <h3>Available Resources</h3>
+                <div id="available" class="table-wrap available-matrix"></div>
+            </div>
+            <div id="result" class="result neutral" role="status">Click Run Safety Check to analyze the current state.</div>
+            <div id="safetySteps" class="steps-area"></div>
+            <div class="button-row">
+                <button id="resetButton" class="button button-secondary" type="button">Reset Original State</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">MODULE 02</p>
+                    <h2>Resource Request Manager</h2>
+                </div>
+            </div>
+            <p class="muted">Enter a request for a process. The dashboard checks input validity, Need, Available resources, and whether granting the request leaves the state safe.</p>
+
+            <div class="form-grid request-grid">
+                <label>Process
+                    <select id="processId">
+                        <option value="0">P0</option>
+                        <option value="1">P1</option>
+                        <option value="2">P2</option>
+                        <option value="3">P3</option>
+                        <option value="4">P4</option>
+                    </select>
+                </label>
+                <label>Resource A
+                    <input id="requestA" type="number" min="0" step="1" value="1">
+                </label>
+                <label>Resource B
+                    <input id="requestB" type="number" min="0" step="1" value="0">
+                </label>
+                <label>Resource C
+                    <input id="requestC" type="number" min="0" step="1" value="0">
+                </label>
+            </div>
+            <div class="button-row">
+                <button id="requestButton" class="button button-primary" type="button">Evaluate Request</button>
+            </div>
+            <div id="requestResult" class="result neutral" role="status">Choose a process and enter resource quantities.</div>
+            <div id="requestMatrices" class="steps-area"></div>
+            <div class="decision-legend">
+                <span><b class="legend-dot safe-dot"></b> GRANTED: safe to allocate</span>
+                <span><b class="legend-dot wait-dot"></b> WAIT: resources not available</span>
+                <span><b class="legend-dot deny-dot"></b> DENIED: invalid or unsafe request</span>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">MODULE 03</p>
+                    <h2>Deadlock Detection &amp; Recovery</h2>
+                </div>
+                <div class="button-row compact">
+                    <button id="detectDeadlockButton" class="button button-primary" type="button">Detect Deadlock</button>
+                    <button id="recoverDeadlockButton" class="button button-danger" type="button">Recover</button>
+                    <button id="resetDeadlockButton" class="button button-secondary" type="button">Reset Scenario</button>
+                </div>
+            </div>
+            <p class="muted">This is a separate two-process, two-resource example. P0 holds R1 and waits for R2; P1 holds R2 and waits for R1.</p>
+            <div class="matrix-grid two-column">
+                <div class="matrix-panel">
+                    <h3>Resource Ownership &amp; Waiting</h3>
+                    <div id="deadlockState" class="table-wrap"></div>
+                </div>
+                <div class="matrix-panel">
+                    <h3>Wait-for Graph</h3>
+                    <div id="waitForGraph" class="graph-area"></div>
+                </div>
+            </div>
+            <div id="deadlockResult" class="result neutral" role="status">Run deadlock detection to inspect the wait-for graph.</div>
+            <p class="note"><strong>Recovery strategy:</strong> terminate P0, release its resource, then allow P1 to complete. This illustrates one possible recovery strategy rather than a universal policy.</p>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">MODULE 04</p>
+                    <h2>Deadlock Prevention: Fixed Resource Order</h2>
+                </div>
+            </div>
+            <p class="muted">The policy requires resources to be acquired in one global order: <strong>R1 before R2</strong>. A process holding R2 must not request R1.</p>
+
+            <div class="policy-rule">
+                <span class="rule-number">1</span>
+                <div><strong>Allowed order</strong><p>Acquire R1 first, then R2.</p></div>
+                <span class="rule-number">2</span>
+                <div><strong>Rejected order</strong><p>Holding R2 and requesting R1 violates the policy.</p></div>
+            </div>
+
+            <div class="form-grid policy-grid">
+                <label>Process
+                    <select id="preventionProcess">
+                        <option>P0</option>
+                        <option>P1</option>
+                    </select>
+                </label>
+                <label>Currently held resource
+                    <select id="heldResource">
+                        <option value="none">None</option>
+                        <option value="R1">R1</option>
+                        <option value="R2">R2</option>
+                    </select>
+                </label>
+                <label>Resource being requested
+                    <select id="requestedResource">
+                        <option value="R1">R1</option>
+                        <option value="R2">R2</option>
+                    </select>
+                </label>
+            </div>
+            <div class="button-row">
+                <button id="checkPolicyButton" class="button button-primary" type="button">Check Ordering Policy</button>
+                <button id="resetPolicyButton" class="button button-secondary" type="button">Reset Policy Example</button>
+            </div>
+            <div id="policyResult" class="result neutral" role="status">Choose a held resource and a requested resource.</div>
+
+            <div class="comparison-grid">
+                <article class="comparison-panel">
+                    <h3>Original scenario</h3>
+                    <p>P0 holds R1 and waits for R2, while P1 holds R2 and waits for R1.</p>
+                    <div class="mini-cycle"><span>P0</span><b>→</b><span>P1</span><b>→</b><span>P0</span></div>
+                    <p class="comparison-label danger-text">Circular wait can occur</p>
+                </article>
+                <article class="comparison-panel">
+                    <h3>With fixed ordering</h3>
+                    <p>Processes follow R1 → R2. A backward request is rejected, preventing this circular-wait pattern if all acquisitions obey the rule.</p>
+                    <div class="mini-cycle order-cycle"><span>R1</span><b>→</b><span>R2</span></div>
+                    <p class="comparison-label success-text">Circular wait prevented by ordering</p>
+                </article>
+            </div>
+            <div class="tradeoffs">
+                <h3>Trade-offs</h3>
+                <ul>
+                    <li><strong>Benefit:</strong> prevents circular wait when every process follows the global order.</li>
+                    <li><strong>Cost:</strong> reduces flexibility; a process may need to acquire a resource earlier than it otherwise would.</li>
+                    <li><strong>Important:</strong> the policy checker validates acquisition order only. It does not check whether the requested resource is currently available.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="card test-runner" id="test-runner">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">MODULE 05</p>
+                    <h2>Automated Test Case Runner</h2>
+                </div>
+                <span class="test-tag">TC1–TC6</span>
+            </div>
+            <p class="muted">Each test case can be run separately with its own button, or all together. Every test shows the matrices it used (Allocation, Maximum, Need, Available and the Work/Available matrix after each step). Tests use independent copies and never alter the live allocations.</p>
+            <div class="test-actions">
+                <button id="run-tests-btn" class="button button-primary" type="button">Run All Test Cases</button>
+                <button id="clear-tests-btn" class="button button-secondary" type="button">Clear Results</button>
+            </div>
+            <div class="test-summary" id="test-summary" aria-live="polite">
+                <span>Total: 0</span><span>Passed: 0</span><span>Failed: 0</span>
+            </div>
+            <div id="test-results" aria-live="polite">
+                
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Operating Systems Activity 2 · Interactive educational simulation</p>
+            <p>Banker's Algorithm and the R1/R2 deadlock example are separate scenarios.</p>
+        </footer>
+    </main>
+</body>
+</html>
