@@ -349,3 +349,27 @@ input:focus, select:focus { border-color: var(--primary); outline: none; }
 .button-small { padding: 7px 12px; font-size: 0.85rem; }
 .test-case-body { margin-top: 12px; }
 .test-details { margin: 0 0 6px; color: #59647b; font-size: 0.88rem; }
+
+
+.matrix-input {
+    width: 70px;
+    padding: 6px 8px;
+    text-align: center;
+    border: 1px solid #c9d6ff;
+    border-radius: 8px;
+    background: #ffffff;
+    font-weight: 700;
+}
+.matrix-input:focus { border-color: var(--primary); outline: none; }
+
+.available-matrix .table-wrap { overflow: visible; }
+.matrix-panel .matrix-input { width: 56px; padding: 5px 6px; }
+.matrix-panel th,
+.matrix-panel td { padding: 9px 4px; }
+
+.matrix-panel .matrix-input {
+    width: 100%;
+    max-width: 52px;
+    min-width: 34px;
+    padding: 5px 4px;
+}

@@ -25,6 +25,7 @@ const maximum = [
 const available = [3, 3, 2];
 
 const originalAllocation = allocation.map(row => [...row]);
+const originalMaximum = maximum.map(row => [...row]);
 const originalAvailable = [...available];
 
 
@@ -43,7 +44,7 @@ function calculateNeed(alloc = allocation, max = maximum) {
 // 3. RENDER BANKER'S ALGORITHM TABLES
 // ==================================================
 
-function createTable(data, elementId) {
+function createTable(data, elementId, editableName = null) {
     const container = document.getElementById(elementId);
     if (!container) return;
 
@@ -62,7 +63,12 @@ function createTable(data, elementId) {
         html += `
             <tr>
                 <td>P${i}</td>
-                ${row.map(value => `<td>${value}</td>`).join("")}
+                ${row.map((value, j) => editableName
+                    ? `<td><input class="matrix-input" type="number" min="0" step="1"
+                              value="${value}" data-matrix="${editableName}"
+                              data-row="${i}" data-col="${j}"
+                              aria-label="${editableName} P${i} ${resourceNames[j]}"></td>`
+                    : `<td>${value}</td>`).join("")}
             </tr>
         `;
     });
@@ -75,19 +81,39 @@ function renderAvailable() {
     const container = document.getElementById("available");
     if (!container) return;
 
-    container.innerHTML = matrixHTML("", [available], {
-        rowLabels: ["Available"],
-        corner: "Vector",
-        className: "plain"
-    });
+    container.innerHTML = `
+        <div class="mini-matrix plain">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vector</th>
+                            ${resourceNames.map(name => `<th>${name}</th>`).join("")}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Available</td>
+                            ${available.map((value, j) => `
+                                <td>
+                                    <input class="matrix-input" type="number" min="0" step="1"
+                                           value="${value}" data-index="${j}"
+                                           aria-label="Available ${resourceNames[j]}">
+                                </td>`).join("")}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="matrix-note">Editable: change a value, then click Run Safety Check.</p>
+        </div>`;
 }
 
 function renderAll() {
     document.getElementById("processCount").textContent = allocation.length;
     document.getElementById("resourceCount").textContent = resourceNames.length;
 
-    createTable(allocation, "allocationTable");
-    createTable(maximum, "maximumTable");
+    createTable(allocation, "allocationTable", "allocation");
+    createTable(maximum, "maximumTable", "maximum");
     createTable(calculateNeed(), "needTable");
     renderAvailable();
 }
@@ -437,6 +463,7 @@ function resetOriginalState() {
     for (let i = 0; i < allocation.length; i++) {
         for (let j = 0; j < resourceNames.length; j++) {
             allocation[i][j] = originalAllocation[i][j];
+            maximum[i][j] = originalMaximum[i][j];
         }
     }
 
@@ -810,7 +837,7 @@ const testCases = [
         description: "Initial state must have a complete, valid safe sequence.",
         run() {
             const alloc = clone2D(originalAllocation);
-            const max = clone2D(maximum);
+            const max = clone2D(originalMaximum);
             const avail = [...originalAvailable];
 
             const result = checkSafety(clone2D(alloc), max, [...avail]);
@@ -835,7 +862,7 @@ const testCases = [
         description: "P0 requests (4, 0, 0) but only 3 units of A are available.",
         run() {
             const request = [4, 0, 0];
-            const need = calculateNeed(originalAllocation, maximum)[0];
+            const need = calculateNeed(originalAllocation, originalMaximum)[0];
             const withinNeed = request.every((v, j) => v <= need[j]);
             const insufficient = request.some((v, j) => v > originalAvailable[j]);
 
@@ -845,7 +872,7 @@ const testCases = [
                     `Expected: WAIT. Actual: ${withinNeed && insufficient ? "WAIT condition identified" : "Test conditions not satisfied"}. ` +
                     "Live state unchanged.",
                 views:
-                    stateMatricesHTML(originalAllocation, maximum, originalAvailable, { highlightRows: [0] }) +
+                    stateMatricesHTML(originalAllocation, originalMaximum, originalAvailable, { highlightRows: [0] }) +
                     matrixHTML("Request check for P0", [request, need, [...originalAvailable]], {
                         rowLabels: ["Request (P0)", "Need (P0)", "Available"],
                         corner: "Vector",
@@ -865,7 +892,7 @@ const testCases = [
         run() {
             const request = [3, 3, 0];
             const p = 4;
-            const need = calculateNeed(originalAllocation, maximum)[p];
+            const need = calculateNeed(originalAllocation, originalMaximum)[p];
             const withinNeed = request.every((v, j) => v <= need[j]);
             const withinAvail = request.every((v, j) => v <= originalAvailable[j]);
 
@@ -879,7 +906,7 @@ const testCases = [
                 });
             }
 
-            const safety = checkSafety(clone2D(trialAlloc), maximum, [...trialAvail]);
+            const safety = checkSafety(clone2D(trialAlloc), originalMaximum, [...trialAvail]);
 
             return {
                 passed: withinNeed && withinAvail && !safety.safe,
@@ -887,12 +914,12 @@ const testCases = [
                     `Within Available: ${withinAvail}. Expected: unsafe trial denied. ` +
                     `Actual: ${!safety.safe ? "Trial state is unsafe" : "Trial state is safe"}. Live state unchanged.`,
                 views:
-                    stateMatricesHTML(originalAllocation, maximum, originalAvailable, { prefix: "Before: ", highlightRows: [p] }) +
+                    stateMatricesHTML(originalAllocation, originalMaximum, originalAvailable, { prefix: "Before: ", highlightRows: [p] }) +
                     matrixHTML("Request check for P4", [request, need, [...originalAvailable]], {
                         rowLabels: ["Request (P4)", "Need (P4)", "Available"], corner: "Vector"
                     }) +
-                    stateMatricesHTML(trialAlloc, maximum, trialAvail, { prefix: "Trial after request: ", highlightRows: [p] }) +
-                    safetyTraceHTML(safety, trialAvail, calculateNeed(trialAlloc, maximum),
+                    stateMatricesHTML(trialAlloc, originalMaximum, trialAvail, { prefix: "Trial after request: ", highlightRows: [p] }) +
+                    safetyTraceHTML(safety, trialAvail, calculateNeed(trialAlloc, originalMaximum),
                         "Safety check on trial state: Work / Available matrix after each step")
             };
         }
@@ -1113,3 +1140,73 @@ renderDeadlockState();
 renderWaitForGraph();
 renderTestCards();
 updateTestSummary();
+
+// Editable Allocation and Maximum matrices (Module 1): Need recalculates live
+function handleMatrixEdit(event) {
+    const input = event.target.closest(".matrix-input");
+    if (!input) return;
+
+    const name = input.dataset.matrix;
+    const i = Number(input.dataset.row);
+    const j = Number(input.dataset.col);
+    const matrix = name === "allocation" ? allocation : maximum;
+    const value = Number(input.value);
+
+    if (input.value.trim() === "" || !Number.isSafeInteger(value) || value < 0) {
+        input.value = matrix[i][j];
+        showResult("result", "INVALID INPUT: Use a non-negative whole number. Previous value restored.", "invalid");
+        return;
+    }
+
+    const newAllocation = name === "allocation" ? value : allocation[i][j];
+    const newMaximum = name === "maximum" ? value : maximum[i][j];
+
+    if (newAllocation > newMaximum) {
+        input.value = matrix[i][j];
+        showResult(
+            "result",
+            `INVALID INPUT: Allocation cannot exceed Maximum for P${i}, resource ${resourceNames[j]} (Need would be negative). Previous value restored.`,
+            "invalid"
+        );
+        return;
+    }
+
+    matrix[i][j] = value;
+    createTable(calculateNeed(), "needTable");
+
+    updateStatus("Not Checked", "status-neutral", "Matrix changed. Run a safety check");
+    showResult("result", `${name === "allocation" ? "Allocation" : "Maximum"} of P${i} ${resourceNames[j]} updated to ${value}. Need recalculated. Click Run Safety Check to re-analyze.`, "neutral");
+    document.getElementById("safetySteps").innerHTML = "";
+}
+
+document.getElementById("allocationTable").addEventListener("change", handleMatrixEdit);
+document.getElementById("maximumTable").addEventListener("change", handleMatrixEdit);
+
+// Editable Available matrix (Module 1)
+document.getElementById("available").addEventListener("change", event => {
+    const input = event.target.closest(".matrix-input");
+    if (!input) return;
+
+    const j = Number(input.dataset.index);
+    const value = Number(input.value);
+
+    if (input.value.trim() === "" || !Number.isSafeInteger(value) || value < 0) {
+        input.value = available[j];
+        showResult(
+            "result",
+            "INVALID INPUT: Available must be a non-negative whole number. Previous value restored.",
+            "invalid"
+        );
+        return;
+    }
+
+    available[j] = value;
+
+    updateStatus("Not Checked", "status-neutral", "Available changed. Run a safety check");
+    showResult(
+        "result",
+        `Available updated to (${available.join(", ")}). Click Run Safety Check to re-analyze.`,
+        "neutral"
+    );
+    document.getElementById("safetySteps").innerHTML = "";
+});
